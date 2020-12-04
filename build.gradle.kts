@@ -4,10 +4,12 @@ buildscript {
         maven(url = "https://files.minecraftforge.net/maven")
         jcenter()
         mavenCentral()
+        maven(url = "https://repo.spongepowered.org/repository/maven-public/")
     }
 
     dependencies {
         classpath(group = "net.minecraftforge.gradle", name = "ForgeGradle", version = "3.+") { isChanging = true }
+        classpath(group = "org.spongepowered", name = "mixingradle", version = "0.7-SNAPSHOT")
     }
 }
 
@@ -33,6 +35,7 @@ plugins {
 }
 
 apply(plugin = "net.minecraftforge.gradle")
+apply(plugin = "org.spongepowered.mixin")
 
 /*===================================================================================================== JVM Info ==== */
 
@@ -75,6 +78,9 @@ tasks.withType<JavaCompile> {
     targetCompatibility = "1.8"
 }
 
+/* Mixins */
+the<MixinExtension>().add(sourceSets["main"], "$modId.refmap.json")
+
 /* Finalize the jar by Reobf */
 tasks.named<Jar>("jar") { finalizedBy("reobfJar") }
 
@@ -88,7 +94,8 @@ tasks.withType<Jar> {
                 "Implementation-Title" to project.name,
                 "Implementation-Version" to project.version,
                 "Implementation-Vendor" to vendor,
-                "Implementation-Timestamp" to Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Implementation-Timestamp" to Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "MixinConfigs" to "$modId.mixins.json"
         )
     }
 }
@@ -106,6 +113,8 @@ fun Date.format(format: String) = SimpleDateFormat(format).format(this)
 typealias RunConfig = net.minecraftforge.gradle.common.util.RunConfig
 typealias UserDevExtension = net.minecraftforge.gradle.userdev.UserDevExtension
 
+typealias MixinExtension = org.spongepowered.asm.gradle.plugins.MixinExtension
+
 typealias RunConfiguration = RunConfig.() -> Unit
 
 fun minecraft(configuration: UserDevExtension.() -> Unit) =
@@ -119,6 +128,8 @@ fun NamedDomainObjectContainerScope<RunConfig>.config(name: String, additionalCo
         workingDirectory(runDirectory)
         property("forge.logging.markers", markers)
         property("forge.logging.console.level", level)
+        property("mixin.env.disableRefMap", "true")
+        arg("--mixin.config=$modId.mixins.json")
 
         additionalConfiguration(this)
 

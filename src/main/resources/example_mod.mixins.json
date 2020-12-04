@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "com.example.examplemod.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "example_mod.refmap.json",
+  "mixins": [
+    "ExampleMixin"
+  ],
+  "client": [
+    "client.MainMenuScreenMixin"
+  ],
+  "server": [
+    "dedicated.DedicatedServerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8"
+}
