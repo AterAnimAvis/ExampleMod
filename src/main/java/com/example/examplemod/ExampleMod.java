@@ -45,10 +45,12 @@ public class ExampleMod {
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+
+        // Register our deferred registers
+        DeferredRegistries.setup(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
-    private void setup(final FMLCommonSetupEvent event)
-    {
+    private void setup(final FMLCommonSetupEvent event) {
         // some preinit code
         LOGGER.info("HELLO FROM PREINIT");
         LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
@@ -59,19 +61,21 @@ public class ExampleMod {
         LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
     }
 
-    private void enqueueIMC(final InterModEnqueueEvent event)
-    {
+    private void enqueueIMC(final InterModEnqueueEvent event) {
         // some example code to dispatch IMC to another mod
-        InterModComms.sendTo("examplemod", "helloworld", () -> { LOGGER.info("Hello world from the MDK"); return "Hello world";});
+        InterModComms.sendTo("examplemod", "helloworld", () -> {
+            LOGGER.info("Hello world from the MDK");
+            return "Hello world";
+        });
     }
 
-    private void processIMC(final InterModProcessEvent event)
-    {
+    private void processIMC(final InterModProcessEvent event) {
         // some example code to receive and process InterModComms from other mods
         LOGGER.info("Got IMC {}", event.getIMCStream().
-                map(m->m.getMessageSupplier().get()).
+                map(m -> m.getMessageSupplier().get()).
                 collect(Collectors.toList()));
     }
+
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(FMLServerStartingEvent event) {
@@ -79,14 +83,37 @@ public class ExampleMod {
         LOGGER.info("HELLO from server starting");
     }
 
-    // You can use EventBusSubscriber to automatically subscribe events on the contained class (this is subscribing to the MOD
-    // Event bus for receiving Registry Events)
-    @Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)
-    public static class RegistryEvents {
+    // You can use EventBusSubscriber to automatically subscribe events on the contained class
+    // (this is subscribing to the MOD Event bus for receiving Setup Events)
+    // See https://cdn.discordapp.com/attachments/665281306426474506/665605979798372392/eventhandler.png for more examples
+    @Mod.EventBusSubscriber(modid = ExampleMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+    public static class EventBusSubscriberExample {
+
         @SubscribeEvent
-        public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
-            // register a new block here
-            LOGGER.info("HELLO from Register Block");
+        public static void setup(final FMLCommonSetupEvent event) {
+            LOGGER.info("HELLO FROM PREINIT 2");
+        }
+
+    }
+
+    public static class DeferredRegistries {
+
+        private static final ItemGroup MOD_GROUP = new ItemGroup(ExampleMod.MOD_ID) {
+            @Override
+            public ItemStack createIcon() {
+                return EXAMPLE_ITEM.get().getDefaultInstance();
+            }
+        };
+
+        private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ExampleMod.MOD_ID);
+
+        public static final RegistryObject<Item> EXAMPLE_ITEM = ITEMS.register(
+                "example_item",
+                () -> new Item(new Item.Properties().group(MOD_GROUP))
+        );
+
+        public static void setup(IEventBus bus) {
+            ITEMS.register(bus);
         }
     }
 }
