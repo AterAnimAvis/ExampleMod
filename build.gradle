@@ -1,11 +1,11 @@
 buildscript {
     repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
+        maven { url = 'https://maven.minecraftforge.net' }
         jcenter()
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
@@ -39,6 +39,18 @@ minecraft {
             property 'forge.logging.console.level', level
 
             mods { examplemod { source sourceSets.main } }
+        }
+
+        test {
+            parent runs.client
+            taskName "test_client"
+
+            environment 'MOD_CLASSES', 'dummy'
+
+            mods {
+                examplemod { source sourceSets.main }
+                tests { sources sourceSets.test }
+            }
         }
 
         server {
